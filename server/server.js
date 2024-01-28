@@ -8,7 +8,7 @@ app.use(bodyParser.json());
 
 app.use(express.static('public'));
 
-const apiKey = '3c67792002e48dddd8dfb152ed2e1b1a';
+const apiKey = 'your_api_key';
 
 app.post('/api/weather', async (req, res) => {
   try {
