@@ -22,7 +22,7 @@ async function getWeather() {
 }
 
 async function getCoordinates(city) {
-  const apiKey = 'e8f51a9fa61247068a52126b455436ce';
+  const apiKey = 'your_api_key';
   const apiUrl = `https://api.opencagedata.com/geocode/v1/json?q=${city}&key=${apiKey}`;
 
   try {
@@ -52,7 +52,7 @@ function displayCoordinates(coordinates) {
 }
 
 async function getWeatherData(city) {
-  const apiKey = '3c67792002e48dddd8dfb152ed2e1b1a';
+  const apiKey = 'your_api_key';
   const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}`;
   
   try {
