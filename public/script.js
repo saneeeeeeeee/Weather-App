@@ -10,51 +10,18 @@ async function getWeather() {
 
   try {
     const weatherData = await getWeatherData(cityName);
-    const coordinates = await getCoordinates(cityName);
-
     displayWeatherInfo(weatherData);
-    displayCoordinates(coordinates);
-    displayMap(coordinates.lat, coordinates.lon);
+    displayMap(weatherData.coord.lat, weatherData.coord.lon);
   } catch (error) {
-    console.error('Error fetching data:', error.message);
-    alert('Error fetching data. Please try again.');
+    console.error('Error fetching weather data:', error.message);
+    alert('Error fetching weather data. Please try again.');
   }
-}
-
-async function getCoordinates(city) {
-  const apiKey = 'your_api_key';
-  const apiUrl = `https://api.opencagedata.com/geocode/v1/json?q=${city}&key=${apiKey}`;
-
-  try {
-    const response = await fetch(apiUrl);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch coordinates: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (data.results.length === 0) {
-      throw new Error(`No results found for the city: ${city}`);
-    }
-
-    const { lat, lng } = data.results[0].geometry;
-    return { lat, lon: lng };
-  } catch (error) {
-    throw new Error(`Error fetching coordinates: ${error.message}`);
-  }
-}
-
-function displayCoordinates(coordinates) {
-  const weatherInfoContainer = document.getElementById('weatherInfo');
-  const coordinatesInfo = `<p>Coordinates:<br>${coordinates.lat}, ${coordinates.lon}</p>`;
-  weatherInfoContainer.insertAdjacentHTML('beforeend', coordinatesInfo);
 }
 
 async function getWeatherData(city) {
   const apiKey = 'your_api_key';
   const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}`;
-  
+
   try {
     const response = await fetch(apiUrl);
 
@@ -66,6 +33,24 @@ async function getWeatherData(city) {
     return weatherData;
   } catch (error) {
     throw new Error(`Error fetching weather data: ${error.message}`);
+  }
+}
+
+async function getAQIData(lat, lon) {
+  const apiKey = 'your_api_key';
+  const apiUrl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+
+  try {
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch AQI data: ${response.status}`);
+    }
+
+    const aqiData = await response.json();
+    return aqiData;
+  } catch (error) {
+    throw new Error(`Error fetching AQI data: ${error.message}`);
   }
 }
 
@@ -82,6 +67,66 @@ function displayWeatherInfo(data) {
     <p>Country Code: ${data.sys.country}</p>
     ${data.rain ? `<p>Rain (last 3 hours): ${data.rain['3h']} mm</p>` : ''}
   `;
+  displayAQIInfo(data.coord.lat, data.coord.lon);
+  getNews(data.name);
+}
+
+async function displayAQIInfo(lat, lon) {
+  try {
+    const aqiData = await getAQIData(lat, lon);
+    const aqiInfoContainer = document.getElementById('aqiInfo');
+    aqiInfoContainer.innerHTML = `
+      <h2>Air Quality Index (AQI)</h2>
+      <p>AQI: ${aqiData.list[0].main.aqi}</p>
+      <p>Particulate Matter (PM2.5): ${aqiData.list[0].components.pm2_5} µg/m³</p>
+      <p>Particulate Matter (PM10): ${aqiData.list[0].components.pm10} µg/m³</p>
+    `;
+  } catch (error) {
+    console.error('Error fetching AQI data:', error.message);
+    const aqiInfoContainer = document.getElementById('aqiInfo');
+    aqiInfoContainer.innerHTML = '<p>Error fetching AQI data. Please try again.</p>';
+  }
+}
+
+async function getNews(city) {
+  const apiKey = 'your_api_key';
+  const newsApiUrl = `https://newsapi.org/v2/everything?q=${city}&apiKey=${apiKey}&pageSize=3`;
+
+  try {
+    const response = await fetch(newsApiUrl);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch news data: ${response.status}`);
+    }
+
+    const newsData = await response.json();
+    displayNewsInfo(newsData.articles);
+  } catch (error) {
+    console.error('Error fetching news data:', error.message);
+    const newsInfoContainer = document.getElementById('newsInfo');
+    newsInfoContainer.innerHTML = '<p>Error fetching news data. Please try again.</p>';
+  }
+}
+
+function displayNewsInfo(newsArticles) {
+  const newsInfoContainer = document.getElementById('newsInfo');
+  newsInfoContainer.innerHTML = '';
+
+  newsArticles.forEach(article => {
+    const truncatedTitle = truncateText(article.title, 50); 
+    const truncatedDescription = truncateText(article.description, 100); 
+    newsInfoContainer.innerHTML += `
+      <div class="news-article">
+        <h3>${truncatedTitle}</h3>
+        <p>${truncatedDescription}</p>
+        <a href="${article.url}" target="_blank">Read more</a>
+      </div>
+    `;
+  });
+}
+
+function truncateText(text, maxLength) {
+  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
 }
 
 function displayMap(lat, lon) {
